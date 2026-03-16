@@ -2,25 +2,30 @@ const express = require("express");
 const router = express.Router();
 
 let categories = [
-  { id: 1, categoryName: "Electronics" }
+    { id: 1, name: "Electronics" }
 ];
 
+
+// Get all categories
 router.get("/", (req, res) => {
-  res.json(categories);
+    res.json(categories);
 });
 
+
+// Add category
 router.post("/", (req, res) => {
-  const category = {
-    id: categories.length + 1,
-    categoryName: req.body.categoryName
-  };
 
-  categories.push(category);
+    const category = {
+        id: categories.length + 1,
+        name: req.body.name
+    };
 
-  res.json({
-    message: "Category added successfully",
-    category
-  });
+    categories.push(category);
+
+    res.json({
+        message: "Category added successfully",
+        category
+    });
 });
 
 module.exports = router;

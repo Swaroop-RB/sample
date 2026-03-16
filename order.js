@@ -1,40 +1,55 @@
 const express = require("express");
 const router = express.Router();
 
-let products = [
-  { id: 1, name: "Laptop", price: 50000, stock: 10 }
-];
-
 let orders = [];
 
-router.post("/", (req, res) => {
+let products = [
+    { id: 1, name: "Laptop", price: 50000, stock: 10 }
+];
 
-  const { productId, quantity } = req.body;
 
-  const product = products.find(p => p.id == productId);
+// Middleware to validate order
+function validateOrder(req, res, next) {
 
-  if (!product) {
-    return res.status(404).json({ message: "Product not found" });
-  }
+    const { productId, quantity } = req.body;
 
-  if (product.stock < quantity) {
-    return res.status(400).json({ message: "Insufficient stock" });
-  }
+    const product = products.find(p => p.id === productId);
 
-  product.stock -= quantity;
+    if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+    }
 
-  const order = {
-    id: orders.length + 1,
-    productId,
-    quantity
-  };
+    if (product.stock < quantity) {
+        return res.status(400).json({ message: "Insufficient stock" });
+    }
 
-  orders.push(order);
+    req.product = product;
 
-  res.json({
-    message: "Order created successfully",
-    order
-  });
+    next();
+}
+
+
+// Create order
+router.post("/", validateOrder, (req, res) => {
+
+    const { quantity } = req.body;
+
+    const product = req.product;
+
+    product.stock -= quantity;
+
+    const order = {
+        id: orders.length + 1,
+        productId: product.id,
+        quantity
+    };
+
+    orders.push(order);
+
+    res.json({
+        message: "Order created successfully",
+        order
+    });
 });
 
 module.exports = router;

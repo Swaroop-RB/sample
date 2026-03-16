@@ -2,50 +2,98 @@ const express = require("express");
 const router = express.Router();
 
 let products = [
-  { id: 1, name: "Laptop", price: 50000, stock: 10 }
+    { id: 1, name: "Laptop", price: 50000, stock: 10 }
 ];
 
+
+// Middleware to validate product data
+function validateProduct(req, res, next) {
+
+    const { name, price, stock } = req.body;
+
+    if (!name) {
+        return res.status(400).json({ message: "Product name is required" });
+    }
+
+    if (price === undefined || price <= 0) {
+        return res.status(400).json({ message: "Valid product price required" });
+    }
+
+    if (stock === undefined || stock < 0) {
+        return res.status(400).json({ message: "Valid stock required" });
+    }
+
+    next();
+}
+
+
+// Middleware to validate product ID
+function validateProductId(req, res, next) {
+
+    const id = parseInt(req.params.id);
+
+    const product = products.find(p => p.id === id);
+
+    if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+    }
+
+    req.product = product;
+
+    next();
+}
+
+
+// Get all products
 router.get("/", (req, res) => {
-  res.json(products);
+    res.json(products);
 });
 
-router.post("/", (req, res) => {
-  const product = {
-    id: products.length + 1,
-    name: req.body.name,
-    price: req.body.price,
-    stock: req.body.stock
-  };
 
-  products.push(product);
+// Add product
+router.post("/", validateProduct, (req, res) => {
 
-  res.json({
-    message: "Product added successfully",
-    product
-  });
+    const newProduct = {
+        id: products.length + 1,
+        name: req.body.name,
+        price: req.body.price,
+        stock: req.body.stock
+    };
+
+    products.push(newProduct);
+
+    res.json({
+        message: "Product added successfully",
+        product: newProduct
+    });
 });
 
-router.put("/:id", (req, res) => {
-  const product = products.find(p => p.id == req.params.id);
 
-  if (!product) {
-    return res.status(404).json({ message: "Product not found" });
-  }
+// Update product
+router.put("/:id", validateProductId, (req, res) => {
 
-  product.name = req.body.name || product.name;
-  product.price = req.body.price || product.price;
-  product.stock = req.body.stock || product.stock;
+    const product = req.product;
 
-  res.json({
-    message: "Product updated",
-    product
-  });
+    product.price = req.body.price || product.price;
+    product.stock = req.body.stock || product.stock;
+
+    res.json({
+        message: "Product updated successfully",
+        product
+    });
 });
 
-router.delete("/:id", (req, res) => {
-  products = products.filter(p => p.id != req.params.id);
 
-  res.json({ message: "Product deleted successfully" });
+// Delete product
+router.delete("/:id", validateProductId, (req, res) => {
+
+    const id = parseInt(req.params.id);
+
+    products = products.filter(p => p.id !== id);
+
+    res.json({
+        message: "Product deleted successfully"
+    });
 });
 
 module.exports = router;
