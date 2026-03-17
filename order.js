@@ -7,7 +7,6 @@ let products = [
     { id: 1, name: "Laptop", price: 50000, stock: 10 }
 ];
 
-
 // Middleware to validate order
 function validateOrder(req, res, next) {
 
@@ -28,8 +27,26 @@ function validateOrder(req, res, next) {
     next();
 }
 
+// GET all orders
+router.get("/", (req, res) => {
+    res.json(orders);
+});
 
-// Create order
+// GET order by ID
+router.get("/:id", (req, res) => {
+
+    const id = parseInt(req.params.id);
+
+    const order = orders.find(o => o.id === id);
+
+    if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+    }
+
+    res.json(order);
+});
+
+// CREATE order
 router.post("/", validateOrder, (req, res) => {
 
     const { quantity } = req.body;
@@ -49,6 +66,18 @@ router.post("/", validateOrder, (req, res) => {
     res.json({
         message: "Order created successfully",
         order
+    });
+});
+
+// DELETE order
+router.delete("/:id", (req, res) => {
+
+    const id = parseInt(req.params.id);
+
+    orders = orders.filter(o => o.id !== id);
+
+    res.json({
+        message: "Order deleted successfully"
     });
 });
 

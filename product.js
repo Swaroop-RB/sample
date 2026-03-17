@@ -2,9 +2,8 @@ const express = require("express");
 const router = express.Router();
 
 let products = [
-    { id: 1, name: "Laptop", price: 50000, stock: 10 }
+    { id: 1, name: "Laptop", slug: "laptop", price: 50000, stock: 10 }
 ];
-
 
 // Middleware to validate product data
 function validateProduct(req, res, next) {
@@ -26,7 +25,6 @@ function validateProduct(req, res, next) {
     next();
 }
 
-
 // Middleware to validate product ID
 function validateProductId(req, res, next) {
 
@@ -43,21 +41,43 @@ function validateProductId(req, res, next) {
     next();
 }
 
-
-// Get all products
+// GET all products
 router.get("/", (req, res) => {
     res.json(products);
 });
 
+// GET product by ID
+router.get("/id/:id", validateProductId, (req, res) => {
+    res.json(req.product);
+});
 
-// Add product
+// GET product by slug
+router.get("/slug/:slug", (req, res) => {
+
+    const slug = req.params.slug;
+
+    const product = products.find(p => p.slug === slug);
+
+    if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.json(product);
+});
+
+// POST create product
 router.post("/", validateProduct, (req, res) => {
+
+    const { name, price, stock } = req.body;
+
+    const slug = name.toLowerCase().replace(/\s+/g, "-");
 
     const newProduct = {
         id: products.length + 1,
-        name: req.body.name,
-        price: req.body.price,
-        stock: req.body.stock
+        name,
+        slug,
+        price,
+        stock
     };
 
     products.push(newProduct);
@@ -68,14 +88,25 @@ router.post("/", validateProduct, (req, res) => {
     });
 });
 
-
-// Update product
+// PUT update product
 router.put("/:id", validateProductId, (req, res) => {
 
     const product = req.product;
 
-    product.price = req.body.price || product.price;
-    product.stock = req.body.stock || product.stock;
+    const { name, price, stock } = req.body;
+
+    if (name) {
+        product.name = name;
+        product.slug = name.toLowerCase().replace(/\s+/g, "-");
+    }
+
+    if (price) {
+        product.price = price;
+    }
+
+    if (stock !== undefined) {
+        product.stock = stock;
+    }
 
     res.json({
         message: "Product updated successfully",
@@ -83,8 +114,7 @@ router.put("/:id", validateProductId, (req, res) => {
     });
 });
 
-
-// Delete product
+// DELETE product
 router.delete("/:id", validateProductId, (req, res) => {
 
     const id = parseInt(req.params.id);
